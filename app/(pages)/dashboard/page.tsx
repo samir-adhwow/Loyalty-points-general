@@ -34,8 +34,8 @@ export default function DashboardPage() {
 
   return (
     <div className="flex w-full flex-col space-y-6">
-      <Card childClassName="flex justify-between items-center">
-        <div>
+      <Card childClassName="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="w-full max-w-xl text-left">
           <div className="mb-4">
             <span className="small-pill px-4 py-2">Loyalty Control Room</span>
           </div>

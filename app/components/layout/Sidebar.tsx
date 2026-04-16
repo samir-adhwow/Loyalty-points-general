@@ -21,7 +21,7 @@ const menu = [
   { label: "Account Mappings", href: "/account-mappings" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -48,11 +48,27 @@ export default function Sidebar() {
     setOpenIndex(index !== -1 ? index : null);
   }, [pathname]);
 
+  // Responsive sidebar classes
+  const sidebarClass = [
+    "fixed z-50 inset-y-0 left-0 w-64 bg-white border-r border-primary/40 shadow-lg transform transition-transform duration-200",
+    open ? "translate-x-0" : "-translate-x-full",
+    "sm:static sm:z-auto sm:inset-0 sm:w-60 sm:translate-x-0 sm:shadow-sm"
+  ].join(" ");
+
   return (
-    <aside className="w-20 sm:w-60 bg-white border-r border-primary/40 shadow-sm">
-      {/* LOGO */}
-      <div className="flex py-4 items-center justify-center sm:justify-start sm:px-5 border-b border-primary/40">
-        <Image src="/mainLogo.svg" alt="Logo" width={160} height={80} />{" "}
+    <aside className={sidebarClass} style={{ minWidth: open ? 240 : undefined }}>
+      {/* Close button for mobile */}
+      <div className="flex py-4 items-center justify-between sm:justify-start sm:px-5 border-b border-primary/40">
+        <Image src="/mainLogo.svg" alt="Logo" width={160} height={80} />
+        {open && onClose && (
+          <button
+            className="sm:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            onClick={onClose}
+            aria-label="Close sidebar"
+          >
+            <Icon icon="heroicons:x-mark" width={24} />
+          </button>
+        )}
       </div>
 
       {/* MENU */}
