@@ -78,8 +78,6 @@ export default function RuleList({
       <Box>
         {loading ? (
           <RulesSkeleton />
-        ) : error ? (
-          <Typography color="error.main">{error}</Typography>
         ) : (
           <Table columns={columnsWithActions} data={rules} />
         )}

@@ -116,6 +116,7 @@ export default function RuleEditorPage({
   const isTiered = form.rewardType === "TIERED";
   const isTieredFlexible = isTiered && form.rewardMode === "FLEXIBLE";
   const showExpiryDays = isTieredFlexible && tierRows.length > 0;
+  const isPercentage = form.rewardType === "PERCENTAGE";
 
   // ---------------- HANDLERS ----------------
   const update =
@@ -285,6 +286,7 @@ export default function RuleEditorPage({
                 <MenuItem value="FIXED">Fixed</MenuItem>
                 <MenuItem value="MULTIPLIER">Multiplier</MenuItem>
                 <MenuItem value="TIERED">Tiered</MenuItem>
+                <MenuItem value="PERCENTAGE">Percentage</MenuItem>
               </SelectField>
 
               {isTiered && (
@@ -341,6 +343,7 @@ export default function RuleEditorPage({
                   value={form.rewardValue}
                   onChange={update("rewardValue")}
                   disabled={isMultiplier || isTiered}
+                  error={Boolean(errors.rewardValue)}
                   helperText={errors.rewardValue || " "}
                 />
               </Grid>

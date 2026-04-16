@@ -17,16 +17,21 @@ const menu = [
     ],
   },
 
-  { label: "Point Details", href: "/loyalty-point-details" },
+  // { label: "Point Details", href: "/loyalty-point-details" },
   { label: "Account Mappings", href: "/account-mappings" },
 ];
 
-export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
+export default function Sidebar({
+  open,
+  onClose,
+}: {
+  open?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  // ---------------- ROUTE CHECKS ----------------
   const isRulesRoute = pathname.startsWith("/rules");
 
   const isAllRulesActive = pathname === "/rules";
@@ -52,11 +57,14 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
   const sidebarClass = [
     "fixed z-50 inset-y-0 left-0 w-64 bg-white border-r border-primary/40 shadow-lg transform transition-transform duration-200",
     open ? "translate-x-0" : "-translate-x-full",
-    "sm:static sm:z-auto sm:inset-0 sm:w-60 sm:translate-x-0 sm:shadow-sm"
+    "sm:static sm:z-auto sm:inset-0 sm:w-60 sm:translate-x-0 sm:shadow-sm",
   ].join(" ");
 
   return (
-    <aside className={sidebarClass} style={{ minWidth: open ? 240 : undefined }}>
+    <aside
+      className={sidebarClass}
+      style={{ minWidth: open ? 240 : undefined }}
+    >
       {/* Close button for mobile */}
       <div className="flex py-4 items-center justify-between sm:justify-start sm:px-5 border-b border-primary/40">
         <Image src="/mainLogo.svg" alt="Logo" width={160} height={80} />

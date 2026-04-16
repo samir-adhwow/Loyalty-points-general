@@ -1,11 +1,14 @@
 import { z } from "zod";
 
-const isoDateString = z.preprocess((value) => {
-  if (typeof value !== "string") return value;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toISOString();
-}, z.string().datetime({ offset: true }).or(z.string().datetime()));
+const isoDateString = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return parsed.toISOString();
+  },
+  z.string().datetime({ offset: true }).or(z.string().datetime()),
+);
 
 const parseJsonObjectField = (fieldName) =>
   z.any().transform((value, ctx) => {
@@ -39,12 +42,15 @@ const parseJsonObjectField = (fieldName) =>
   });
 
 const nullableNonNegativeNumber = (label) =>
-  z.preprocess((value) => {
-    if (value === "" || value === null || value === undefined) return null;
-    if (typeof value === "number") return value;
-    const parsed = Number(value);
-    return Number.isNaN(parsed) ? value : parsed;
-  }, z.number().min(0, `${label} cannot be negative.`).nullable());
+  z.preprocess(
+    (value) => {
+      if (value === "" || value === null || value === undefined) return null;
+      if (typeof value === "number") return value;
+      const parsed = Number(value);
+      return Number.isNaN(parsed) ? value : parsed;
+    },
+    z.number().min(0, `${label} cannot be negative.`).nullable(),
+  );
 
 export const createRulePayloadSchema = z
   .object({
@@ -59,8 +65,7 @@ export const createRulePayloadSchema = z
     multiplier: nullableNonNegativeNumber("Multiplier"),
     minEventValue: nullableNonNegativeNumber("Min event value"),
     maxPointsPerTxn: nullableNonNegativeNumber("Max points per transaction"),
-    priority: z
-      .coerce
+    priority: z.coerce
       .number()
       .int()
       .min(1, "Priority is required.")
@@ -76,5 +81,14 @@ export const createRulePayloadSchema = z
     {
       message: "Applies To must be later than or equal to Applies From.",
       path: ["appliesTo"],
+    },
+  )
+  .refine(
+    (payload) =>
+      payload.rewardType !== "PERCENTAGE" ||
+      (typeof payload.rewardValue === "number" && payload.rewardValue <= 100),
+    {
+      message: "Percentage cannot exceed 100%",
+      path: ["rewardValue"],
     },
   );

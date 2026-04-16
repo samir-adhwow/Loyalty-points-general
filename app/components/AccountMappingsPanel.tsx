@@ -45,14 +45,6 @@ export default function AccountMappingsPanel() {
   return (
     <Card title="Account Mappings">
       <div className="space-y-4">
-        {error ? (
-          <Typography color="error.main">
-            {error instanceof Error
-              ? error.message
-              : "Failed to fetch account mappings."}
-          </Typography>
-        ) : null}
-
         <Box>
           <Table columns={accountMappingColumns} data={rows} />
         </Box>

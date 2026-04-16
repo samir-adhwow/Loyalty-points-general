@@ -117,14 +117,6 @@ export default function LoyaltyPointDetailsPanel() {
             </div>
           </div>
 
-          {detailsQuery.error && (
-            <Typography color="error.main">
-              {detailsQuery.error instanceof Error
-                ? detailsQuery.error.message
-                : "Failed to fetch loyalty point details."}
-            </Typography>
-          )}
-
           <Box>
             <Table columns={columns_LoyaltyDetailsPanel} data={detailsRows} />
           </Box>
