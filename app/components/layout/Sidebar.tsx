@@ -52,7 +52,7 @@ export default function Sidebar() {
     <aside className="w-20 sm:w-60 bg-white border-r border-primary/40 shadow-sm">
       {/* LOGO */}
       <div className="flex py-4 items-center justify-center sm:justify-start sm:px-5 border-b border-primary/40">
-        <Image src="/mainLogo.svg" alt="Logo" width={120} height={40} />
+        <Image src="/mainLogo.svg" alt="Logo" width={160} height={80} />{" "}
       </div>
 
       {/* MENU */}
