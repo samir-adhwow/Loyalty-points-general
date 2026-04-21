@@ -6,6 +6,7 @@ import Button from "@/app/components/ui/Button";
 import Card from "@/app/components/ui/Card";
 import RuleList from "@/app/components/RuleList";
 import { useRouter } from "next/navigation";
+import { RuleMetricsChart } from "@/app/components/RuleMetricsChart";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -90,6 +91,8 @@ export default function DashboardPage() {
           )}
         </div>
       </Card>
+
+      <RuleMetricsChart />
 
       <RuleList
         rules={rules.slice(0, 5)}

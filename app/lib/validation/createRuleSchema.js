@@ -65,6 +65,8 @@ export const createRulePayloadSchema = z
     multiplier: nullableNonNegativeNumber("Multiplier"),
     minEventValue: nullableNonNegativeNumber("Min event value"),
     maxPointsPerTxn: nullableNonNegativeNumber("Max points per transaction"),
+    blackoutFrom: isoDateString.optional(),
+    blackoutTo: isoDateString.optional(),
     priority: z.coerce
       .number()
       .int()
@@ -73,6 +75,10 @@ export const createRulePayloadSchema = z
     status: z.string().min(1, "Status is required."),
     appliesFrom: isoDateString,
     appliesTo: isoDateString,
+    maxPointsDaily: nullableNonNegativeNumber("Max points daily"),
+    maxPointsWeekly: nullableNonNegativeNumber("Max points weekly"),
+    maxPointsMonthly: nullableNonNegativeNumber("Max points monthly"),
+    partnerId: z.coerce.number().int().optional(),
     criteriaExpression: parseJsonObjectField("Criteria Expression"),
     rewardPayload: parseJsonObjectField("Reward Payload"),
   })
@@ -81,6 +87,16 @@ export const createRulePayloadSchema = z
     {
       message: "Applies To must be later than or equal to Applies From.",
       path: ["appliesTo"],
+    },
+  )
+  .refine(
+    (payload) =>
+      !payload.blackoutFrom ||
+      !payload.blackoutTo ||
+      new Date(payload.blackoutTo) >= new Date(payload.blackoutFrom),
+    {
+      message: "Blackout To must be later than or equal to Blackout From.",
+      path: ["blackoutTo"],
     },
   )
   .refine(

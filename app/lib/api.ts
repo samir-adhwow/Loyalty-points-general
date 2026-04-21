@@ -6,6 +6,7 @@ import {
   LoyaltyPointDetailsParams,
   LoyaltyRule,
   LoyaltyTransactionsParams,
+  RuleMetricsResponse,
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -95,6 +96,15 @@ export function getAccountMappings() {
   return apiRequest("/api/v1/loyalty/account_mappings", {
     method: "GET",
   }) as Promise<ApiResponse<Record<string, unknown>>>;
+}
+
+// ✅ Fetch rule metrics
+export function getRuleMetrics(from?: string, to?: string) {
+  return apiRequest(
+    "/internal/loyalty/metrics/rules",
+    { method: "GET" },
+    { ...(from && { from }), ...(to && { to }) },
+  ) as Promise<ApiListResponse<RuleMetricsResponse>>;
 }
 
 // ✅ Fetch loyalty transactions

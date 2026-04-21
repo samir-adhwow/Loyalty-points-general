@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { Box, Grid, MenuItem, Typography } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material/Select";
@@ -55,6 +56,8 @@ export default function RuleEditorPage({
 }: RuleEditorPageProps) {
   const isEdit = mode === "edit";
   const router = useRouter();
+
+  const { register, setFocus } = useForm();
 
   // ---------------- STATE ----------------
   const [form, setForm] = useState<RuleForm>(getInitialCreateForm());
@@ -194,6 +197,8 @@ export default function RuleEditorPage({
       rewardPayload,
     };
 
+    console.log("Submitting payload:", payload);
+
     const result = createRulePayloadSchema.safeParse(payload);
 
     if (!result.success) {
@@ -204,7 +209,16 @@ export default function RuleEditorPage({
           nextErrors[field] = i.message;
         }
       });
+      console.log("Validation errors:", nextErrors);
       setErrors(nextErrors);
+      const firstField = Object.keys(nextErrors)[0];
+      if (firstField) {
+        try {
+          setTimeout(() => setFocus(firstField as any), 0);
+        } catch (e) {
+          console.warn("Failed to set focus on field:", firstField, e);
+        }
+      }
       return;
     }
 
@@ -245,10 +259,13 @@ export default function RuleEditorPage({
               ).map((f) => (
                 <Grid key={f} size={{ xs: 12, sm: 6 }}>
                   <FormTextField
+                    name={f}
+                    inputRef={register(f).ref}
                     label={formatFieldLabel(f)}
                     value={form[f]}
                     onChange={update(f)}
                     disabled={f === "id"}
+                    required={["code", "name", "eventType"].includes(f)}
                     error={!!errors[f]}
                     helperText={errors[f] || " "}
                   />
@@ -310,6 +327,7 @@ export default function RuleEditorPage({
                 label="Status"
                 value={form.status}
                 onChange={update("status")}
+                required
                 error={Boolean(errors.status)}
                 helperText={errors.status || " "}
               >
@@ -338,11 +356,14 @@ export default function RuleEditorPage({
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormTextField
+                  name="rewardValue"
+                  inputRef={register("rewardValue").ref}
                   label="Reward Value"
                   type="number"
                   value={form.rewardValue}
                   onChange={update("rewardValue")}
                   disabled={isMultiplier || isTiered}
+                  required
                   error={Boolean(errors.rewardValue)}
                   helperText={errors.rewardValue || " "}
                 />
@@ -350,33 +371,42 @@ export default function RuleEditorPage({
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormTextField
+                  name="multiplier"
+                  inputRef={register("multiplier").ref}
                   label="Multiplier"
                   type="number"
                   value={form.multiplier}
                   onChange={update("multiplier")}
                   disabled={!isMultiplier}
+                  error={Boolean(errors.multiplier)}
                   helperText={errors.multiplier || " "}
                 />
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormTextField
+                  name="minEventValue"
+                  inputRef={register("minEventValue").ref}
                   label="Min Event Value"
                   type="number"
                   value={form.minEventValue}
                   onChange={update("minEventValue")}
                   disabled={isMultiplier || isTieredFlexible}
+                  error={Boolean(errors.minEventValue)}
                   helperText={errors.minEventValue || " "}
                 />
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormTextField
+                  name="maxPointsPerTxn"
+                  inputRef={register("maxPointsPerTxn").ref}
                   label="Max Points / Txn"
                   type="number"
                   value={form.maxPointsPerTxn}
                   onChange={update("maxPointsPerTxn")}
                   disabled={isTieredFlexible}
+                  error={Boolean(errors.maxPointsPerTxn)}
                   helperText={errors.maxPointsPerTxn || " "}
                 />
               </Grid>
@@ -395,6 +425,8 @@ export default function RuleEditorPage({
                   slotProps={{
                     textField: {
                       fullWidth: true,
+                      name: "appliesFrom",
+                      inputRef: register("appliesFrom").ref,
                       helperText: errors.appliesFrom || " ",
                     },
                   }}
@@ -410,7 +442,97 @@ export default function RuleEditorPage({
                   slotProps={{
                     textField: {
                       fullWidth: true,
+                      name: "appliesTo",
+                      inputRef: register("appliesTo").ref,
                       helperText: errors.appliesTo || " ",
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </SectionBox>
+
+          {/* ── Limits & Blackout ────────────────────────────────── */}
+          <SectionBox title="Limits & Blackout">
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField
+                  name="partnerId"
+                  inputRef={register("partnerId").ref}
+                  label="Partner ID"
+                  value={form.partnerId ?? ""}
+                  onChange={update("partnerId")}
+                  helperText={errors.partnerId || " "}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField
+                  name="maxPointsDaily"
+                  inputRef={register("maxPointsDaily").ref}
+                  label="Max Points Daily"
+                  type="number"
+                  value={form.maxPointsDaily ?? ""}
+                  onChange={update("maxPointsDaily")}
+                  helperText={errors.maxPointsDaily || " "}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField
+                  name="maxPointsWeekly"
+                  inputRef={register("maxPointsWeekly").ref}
+                  label="Max Points Weekly"
+                  type="number"
+                  value={form.maxPointsWeekly ?? ""}
+                  onChange={update("maxPointsWeekly")}
+                  helperText={errors.maxPointsWeekly || " "}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField
+                  name="maxPointsMonthly"
+                  inputRef={register("maxPointsMonthly").ref}
+                  label="Max Points Monthly"
+                  type="number"
+                  value={form.maxPointsMonthly ?? ""}
+                  onChange={update("maxPointsMonthly")}
+                  helperText={errors.maxPointsMonthly || " "}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <DateTimePicker
+                  label="Blackout From"
+                  value={form.blackoutFrom ? dayjs(form.blackoutFrom) : null}
+                  onChange={updateDate("blackoutFrom")}
+                  sx={{ width: "100%" }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      name: "blackoutFrom",
+                      inputRef: register("blackoutFrom").ref,
+                      error: Boolean(errors.blackoutFrom),
+                      helperText: errors.blackoutFrom || " ",
+                    },
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <DateTimePicker
+                  label="Blackout To"
+                  value={form.blackoutTo ? dayjs(form.blackoutTo) : null}
+                  onChange={updateDate("blackoutTo")}
+                  sx={{ width: "100%" }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      name: "blackoutTo",
+                      inputRef: register("blackoutTo").ref,
+                      error: Boolean(errors.blackoutTo),
+                      helperText: errors.blackoutTo || " ",
                     },
                   }}
                 />
@@ -433,6 +555,8 @@ export default function RuleEditorPage({
               <Grid container spacing={2} sx={{ mt: 0.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FormTextField
+                    name="expiryDays"
+                    inputRef={register("expiryDays").ref}
                     label="Expiry Days"
                     type="number"
                     value={form.expiryDays}

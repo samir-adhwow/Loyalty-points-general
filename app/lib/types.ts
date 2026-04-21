@@ -80,3 +80,15 @@ export type AccountMappingsParams = {
   pageSize?: number;
   externalAccountId?: string;
 };
+
+export type RuleMetricsResponse = {
+  ruleId: number;
+  ruleCode: string;
+  ruleName: string;
+  totalPointsOriginal: number;
+  totalPointsRemaining: number;
+  expiredPoints: number;
+  bucketCount: number;
+  windowFrom: string;
+  windowTo: string;
+};

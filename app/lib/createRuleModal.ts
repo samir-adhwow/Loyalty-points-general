@@ -101,6 +101,12 @@ export const getInitialCreateForm = () => ({
   appliesFrom: defaultAppliesFrom(),
   appliesTo: defaultAppliesTo(),
   expiryDays: "",
+  partnerId: "",
+  maxPointsDaily: "",
+  maxPointsWeekly: "",
+  maxPointsMonthly: "",
+  blackoutFrom: "",
+  blackoutTo: "",
 });
 
 export const getEditFormFromRule = (rule: any) => ({
@@ -126,6 +132,12 @@ export const getEditFormFromRule = (rule: any) => ({
   priority: normalizePriorityValue(rule?.priority),
   appliesFrom: rule?.appliesFrom || defaultAppliesFrom(),
   appliesTo: rule?.appliesTo || defaultAppliesTo(),
+  partnerId: rule.partnerId ?? "",
+  maxPointsDaily: rule.maxPointsDaily ?? "",
+  maxPointsWeekly: rule.maxPointsWeekly ?? "",
+  maxPointsMonthly: rule.maxPointsMonthly ?? "",
+  blackoutFrom: rule.blackoutFrom ?? "",
+  blackoutTo: rule.blackoutTo ?? "",
   expiryDays:
     (typeof rule?.rewardPayload === "object"
       ? rule.rewardPayload?.expiryDays
