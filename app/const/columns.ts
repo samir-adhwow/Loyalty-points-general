@@ -53,19 +53,14 @@ export const account_mapping_columns = [
   { field: "id", headerName: "ID" },
   { field: "accountNumber", headerName: "Account Number" },
   { field: "externalAccount", headerName: "External Account" },
-  { field: "system", headerName: "System" },
   {
-    field: "createdDate",
-    headerName: "Created Date",
+    field: "system",
+    headerName: "System",
     renderCell: (value: string | number | null | undefined) => {
-      if (!value) return "-";
-      const date = new Date(value);
-      return Number.isNaN(date.getTime())
-        ? String(value)
-        : date.toLocaleString();
+      if (value === "P") return "Prepaid";
+      return value ?? "-";
     },
   },
-  { field: "createdBy", headerName: "Created By" },
   {
     field: "lastUpdatedDate",
     headerName: "Last Updated Date",
@@ -103,15 +98,18 @@ export const columns_LoyaltyAccountPanel = [
   },
 ];
 
-export const balanceColumns_LoyaltyAccountPanel = [
-  { field: "loyaltyAccountId", headerName: "Loyalty Account Id" },
-  { field: "balance", headerName: "Balance", align: "right" },
-  { field: "lifetimeEarned", headerName: "Lifetime Earned", align: "right" },
-  { field: "lifetimeBurned", headerName: "Lifetime Burned", align: "right" },
+export const balanceColumns_LoyaltyAccountPanel = (accountId: string) => [
+  {
+    field: "loyaltyAccountId",
+    headerName: "Loyalty Account Id",
+    renderCell: () => accountId,
+  },
+  { field: "balance", headerName: "Balance" },
+  { field: "lifetimeEarned", headerName: "Lifetime Earned" },
+  { field: "lifetimeBurned", headerName: "Lifetime Burned" },
   {
     field: "lifetimeExpired",
     headerName: "Lifetime Expired",
-    align: "right",
   },
   {
     field: "lastActivityAt",

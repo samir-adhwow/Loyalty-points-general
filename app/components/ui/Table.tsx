@@ -1,128 +1,92 @@
-"use client";
-
-import {
-  Box,
-  Paper,
-  Table as MuiTable,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-  Chip,
-} from "@mui/material";
+type Column = {
+  field: string;
+  headerName: string;
+  align?: "left" | "right" | "center";
+  renderCell?: (
+    value: unknown,
+    row: Record<string, unknown>,
+  ) => React.ReactNode;
+  className?: string;
+  cellClassName?: string;
+};
 
 type TableProps = {
-  columns?: any[];
-  data?: any[];
+  columns?: Column[];
+  data?: Record<string, unknown>[];
 };
 
 export default function Table({ columns = [], data = [] }: TableProps) {
   const hasRows = data.length > 0;
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        width: "100%",
-        overflow: "hidden",
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        background:
-          "linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 5%, transparent) 0%, rgba(255, 255, 255, 1) 22%)",
-      }}
-    >
-      <TableContainer sx={{ maxHeight: 560 }}>
-        <MuiTable stickyHeader aria-label="data table">
-          <TableHead
-            sx={{
-              boxShadow: hasRows
-                ? "inset 0 -2px 0 color-mix(in srgb, var(--color-primary) 20%, transparent)"
-                : undefined,
-            }}
-          >
-            {hasRows && (
-              <TableRow>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.field}
-                    align={column.align || "left"}
-                    sx={{
-                      fontWeight: 700,
-                      letterSpacing: 0.2,
-                      textTransform: "uppercase",
-                      fontSize: 12,
-                      color: "text.secondary",
-                      backgroundColor: "#f8fafc",
-                      borderBottom: "2px solid",
-                      borderColor: "primary.light",
-                      py: 1.5,
-                      ...column.sx,
-                    }}
-                  >
-                    {column.headerName}
-                  </TableCell>
-                ))}
-              </TableRow>
-            )}
-          </TableHead>
-
-          <TableBody>
-            {hasRows ? (
-              data.map((row, rowIndex) => (
-                <TableRow
-                  hover
-                  key={row.id ?? rowIndex}
-                  sx={{
-                    "&:nth-of-type(even)": {
-                      backgroundColor: "rgba(25, 118, 210, 0.03)",
-                    },
-                    "&:last-child td": { borderBottom: 0 },
-                    transition: "background-color 160ms ease",
-                  }}
+    <div className="w-full overflow-x-auto">
+      <table className="w-full text-sm p-4">
+        {/* Header */}
+        {hasRows && (
+          <thead>
+            <tr className="bg-lighter">
+              {columns.map((col) => (
+                <th
+                  key={col.field}
+                  className={`
+          border-b border-light px-4 py-2 
+          text-xs font-bold uppercase tracking-widest text-label
+          ${col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : "text-left"}
+          ${col.className ?? ""}
+        `}
                 >
-                  {columns.map((column) => {
-                    const value = row[column.field];
-                    const content =
-                      typeof column.renderCell === "function"
-                        ? column.renderCell(value, row)
-                        : value ?? "-";
+                  {col.headerName}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
 
-                    return (
-                      <TableCell
-                        key={`${row.id ?? rowIndex}-${column.field}`}
-                        align={column.align || "left"}
-                        sx={{
-                          py: 1.5,
-                          borderColor: "divider",
-                          ...column.cellSx,
-                        }}
-                      >
-                        {content}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length || 1} sx={{ py: 8 }}>
-                  <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }} gutterBottom>
-                      No data yet
-                    </Typography>
-                    <Typography color="text.secondary">
-                      There is no data to display at the moment.
-                    </Typography>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </MuiTable>
-      </TableContainer>
-    </Paper>
+        {/* Body */}
+        <tbody className="">
+          {hasRows ? (
+            data.map((row, rowIndex) => (
+              <tr
+                key={(row.id as string) ?? rowIndex}
+                className="group transition-colors duration-100 hover:bg-lightest px-4"
+              >
+                {columns.map((col) => {
+                  const value = row[col.field];
+                  const content =
+                    typeof col.renderCell === "function"
+                      ? col.renderCell(value, row)
+                      : ((value as React.ReactNode) ?? "-");
+
+                  return (
+                    <td
+                      key={`${(row.id as string) ?? rowIndex}-${col.field}`}
+                      className={`
+                        py-3 px-4
+                        ${rowIndex !== data.length - 1 ? "border-b border-lighter" : ""}
+                        ${col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : "text-left"}
+                        ${col.cellClassName ?? ""}
+                      `}
+                    >
+                      {content}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={columns.length || 1} className="py-16 text-center">
+                <p className="text-base font-semibold text-gray-700 mb-1">
+                  No data yet
+                </p>
+                <p className="text-sm text-gray-400">
+                  There is no data to display at the moment.
+                </p>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -17,6 +17,14 @@ export default function FormTextField({
   disabled?: boolean;
   [key: string]: any;
 }) {
+  // Ensure value is never null for controlled input
+  const fixedProps = {
+    ...props,
+    value:
+      props.value === null && "value" in props
+        ? ""
+        : props.value,
+  };
   return (
     <MuiTextField
       required={required}
@@ -31,6 +39,10 @@ export default function FormTextField({
               },
             }
           : {}),
+        "& .MuiFormHelperText-root": {
+          marginLeft: 0,
+          marginRight: 0,
+        },
       }}
       slotProps={{
         ...slotProps,
@@ -44,7 +56,7 @@ export default function FormTextField({
           },
         },
       }}
-      {...props}
+      {...fixedProps}
     />
   );
 }

@@ -1,5 +1,3 @@
-import { Typography, Stack, Box } from "@mui/material";
-
 export function prettifyKey(key) {
   return key
     .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -21,9 +19,7 @@ export function formatRuleValue(key, value) {
     }
   }
 
-  if (typeof value === "object") {
-    return value;
-  }
+  if (typeof value === "object") return value;
 
   return String(value);
 }
@@ -32,148 +28,89 @@ export default function RuleValueRenderer({ value, itemKey = "", depth = 0 }) {
   value = formatRuleValue(itemKey, value);
 
   if (value === null || value === undefined || value === "") {
-    return (
-      <Typography sx={{ color: "text.secondary", fontSize: "1rem" }}>
-        -
-      </Typography>
-    );
+    return <span className="text-sm text-gray-400 italic">—</span>;
   }
 
   const isCompactLevel = depth >= 2;
 
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      return (
-        <Typography sx={{ color: "text.secondary", fontSize: "1rem" }}>
-          Empty list
-        </Typography>
-      );
+      return <span className="text-sm text-gray-400 italic">Empty list</span>;
     }
-
     return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 1,
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex flex-wrap gap-2 mt-1">
         {value.map((item, index) => (
-          <Box
+          <div
             key={`${itemKey}-arr-${index}`}
-            sx={{
-              border: "1px dashed",
-              borderColor: "divider",
-              borderRadius: 1.5,
-              p: 1,
-              bgcolor: "background.default",
-              flex: "1 1 280px",
-              minWidth: 0,
-            }}
+            className="border border-dashed border-primary/20 rounded-lg p-2 bg-primary/2 flex-1 min-w-[220px]"
           >
             <RuleValueRenderer
               value={item}
               itemKey={`${itemKey}-${index}`}
               depth={depth + 1}
             />
-          </Box>
+          </div>
         ))}
-      </Box>
+      </div>
     );
   }
 
   if (typeof value === "object") {
     const entries = Object.entries(value);
     if (entries.length === 0) {
-      return (
-        <Typography sx={{ color: "text.secondary", fontSize: "1rem" }}>
-          Empty object
-        </Typography>
-      );
+      return <span className="text-sm text-gray-400 italic">—</span>;
     }
 
     if (isCompactLevel) {
       return (
-        <Stack spacing={0.5}>
+        <div className="flex flex-col gap-1">
           {entries.map(([nestedKey, nestedValue]) => (
-            <Stack
+            <div
               key={`${itemKey}-${nestedKey}`}
-              direction="row"
-              spacing={1}
-              alignitems="flex-start"
+              className="flex gap-3 items-start"
             >
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  minWidth: 140,
-                  fontSize: "1rem",
-                }}
-              >
+              <span className="text-xs text-gray-400 shrink-0 min-w-[120px]">
                 {prettifyKey(nestedKey)}:
-              </Typography>
-              <Box sx={{ flex: 1 }}>
+              </span>
+              <div className="flex-1">
                 <RuleValueRenderer
                   value={nestedValue}
                   itemKey={`${itemKey}-${nestedKey}`}
                   depth={depth + 1}
                 />
-              </Box>
-            </Stack>
+              </div>
+            </div>
           ))}
-        </Stack>
+        </div>
       );
     }
 
     return (
-      <Stack spacing={1}>
+      <div className="flex flex-col gap-2">
         {entries.map(([nestedKey, nestedValue]) => (
-          <Box
+          <div
             key={`${itemKey}-${nestedKey}`}
-            sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 1.5,
-              p: 1,
-              bgcolor: "background.paper",
-            }}
+            className="rounded-lg border border-gray-100 bg-gray-50/60 p-2.5"
           >
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                textTransform: "uppercase",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                letterSpacing: 0.5,
-              }}
-            >
+            <span className="text-[0.65rem] font-semibold uppercase tracking-widest text-gray-400">
               {prettifyKey(nestedKey)}
-            </Typography>
-            <Box sx={{ mt: 0.25 }}>
+            </span>
+            <div className="mt-1">
               <RuleValueRenderer
                 value={nestedValue}
                 itemKey={`${itemKey}-${nestedKey}`}
                 depth={depth + 1}
               />
-            </Box>
-          </Box>
+            </div>
+          </div>
         ))}
-      </Stack>
+      </div>
     );
   }
 
   return (
-    <Typography
-      sx={{
-        whiteSpace: "pre-wrap",
-        wordBreak: "break-word",
-        fontFamily: "var(--font-geist-mono)",
-        fontSize: "1rem",
-      }}
-    >
+    <span className="text-sm font-mono break-all whitespace-pre-wrap text-gray-800">
       {String(value)}
-    </Typography>
+    </span>
   );
 }

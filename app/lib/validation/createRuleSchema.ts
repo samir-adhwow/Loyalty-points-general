@@ -1,60 +1,52 @@
 import { z } from "zod";
 
-const isoDateString = z.preprocess(
-  (value) => {
-    if (typeof value !== "string") return value;
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return value;
-    return parsed.toISOString();
-  },
-  z.string().datetime({ offset: true }).or(z.string().datetime()),
-);
+const isoDateString = z.preprocess((value): string | null => {
+  if (value === "" || value === null || value === undefined) return null;
+  if (typeof value !== "string") return value as string;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString();
+}, z.string().datetime().nullable());
 
-const parseJsonObjectField = (fieldName) =>
-  z.any().transform((value, ctx) => {
-    let parsedValue = value;
-
-    if (typeof value === "string") {
-      try {
-        parsedValue = JSON.parse(value || "{}");
-      } catch {
-        ctx.addIssue({
-          code: "custom",
-          message: `${fieldName} must be valid JSON.`,
-        });
-        return z.NEVER;
-      }
-    }
-
-    if (
-      !parsedValue ||
-      typeof parsedValue !== "object" ||
-      Array.isArray(parsedValue)
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        message: `${fieldName} must be a JSON object.`,
-      });
-      return z.NEVER;
-    }
-
-    return parsedValue;
-  });
-
-const nullableNonNegativeNumber = (label) =>
+const parseJsonObjectField = (fieldName: string) =>
   z.preprocess(
-    (value) => {
+    (value): Record<string, string> => {
+      if (typeof value === "string") {
+        try {
+          return JSON.parse(value || "{}");
+        } catch {
+          return value as never;
+        }
+      }
+      return value as Record<string, string>;
+    },
+    z
+      .record(z.string(), z.string())
+      .refine((v) => v !== null && !Array.isArray(v), {
+        message: `${fieldName} must be a JSON object.`,
+      }),
+  );
+
+const nullableNonNegativeNumber = (label: string) =>
+  z.preprocess(
+    (value): number | null => {
       if (value === "" || value === null || value === undefined) return null;
       if (typeof value === "number") return value;
       const parsed = Number(value);
-      return Number.isNaN(parsed) ? value : parsed;
+      return Number.isNaN(parsed) ? (value as number) : parsed;
     },
     z.number().min(0, `${label} cannot be negative.`).nullable(),
   );
 
+const requiredIsoDateString = z.preprocess((value): string => {
+  if (typeof value !== "string" || value === "") return value as string;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString();
+}, z.string().datetime());
+
 export const createRulePayloadSchema = z
   .object({
-    // id: z.number().int().min(1, "ID must be a positive integer."),
     code: z.string().trim().min(1, "Code is required."),
     name: z.string().trim().min(1, "Name is required."),
     description: z.string().trim(),
@@ -65,20 +57,20 @@ export const createRulePayloadSchema = z
     multiplier: nullableNonNegativeNumber("Multiplier"),
     minEventValue: nullableNonNegativeNumber("Min event value"),
     maxPointsPerTxn: nullableNonNegativeNumber("Max points per transaction"),
-    blackoutFrom: isoDateString.optional(),
-    blackoutTo: isoDateString.optional(),
+    blackoutFrom: isoDateString.optional().nullable(),
+    blackoutTo: isoDateString.optional().nullable(),
     priority: z.coerce
       .number()
       .int()
       .min(1, "Priority is required.")
       .max(3, "Priority must be LOW, MEDIUM, or HIGH."),
     status: z.string().min(1, "Status is required."),
-    appliesFrom: isoDateString,
-    appliesTo: isoDateString,
+    appliesFrom: requiredIsoDateString,
+    appliesTo: requiredIsoDateString,
     maxPointsDaily: nullableNonNegativeNumber("Max points daily"),
     maxPointsWeekly: nullableNonNegativeNumber("Max points weekly"),
     maxPointsMonthly: nullableNonNegativeNumber("Max points monthly"),
-    partnerId: z.coerce.number().int().optional(),
+    partnerId: nullableNonNegativeNumber("Partner ID"),
     criteriaExpression: parseJsonObjectField("Criteria Expression"),
     rewardPayload: parseJsonObjectField("Reward Payload"),
   })

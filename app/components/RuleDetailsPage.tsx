@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Skeleton, Stack, Typography } from "@mui/material";
 import Button from "./ui/Button";
 import Card from "./ui/Card";
 import { useApiQuery } from "../lib/useApi";
@@ -11,6 +10,49 @@ import RulesSkeleton from "./ui/RulesSkeleton";
 import RuleValueRenderer, { prettifyKey } from "./RuleValueRenderer";
 import { Icon } from "@iconify/react";
 import type { LoyaltyRule } from "../lib/types";
+import FieldBox from "./ViewRule/FieldBox";
+import SectionGroup from "./ViewRule/SectionGroup";
+import FullWidthBox from "./ViewRule/FullWidthBox";
+
+const GROUPS: {
+  label: string;
+  icon: string;
+  keys: string[];
+  cols?: string;
+}[] = [
+  {
+    label: "Identity",
+    icon: "fluent:tag-24-regular",
+    keys: ["id", "code", "name", "description"],
+    cols: "grid-cols-2 md:grid-cols-4",
+  },
+  {
+    label: "Configuration",
+    icon: "fluent:settings-24-regular",
+    keys: ["ruleType", "eventType", "status", "priority"],
+    cols: "grid-cols-2 md:grid-cols-4",
+  },
+  {
+    label: "Schedule",
+    icon: "fluent:calendar-24-regular",
+    keys: ["appliesFrom", "appliesTo"],
+    cols: "grid-cols-1 sm:grid-cols-2",
+  },
+  {
+    label: "Reward",
+    icon: "fluent:gift-24-regular",
+    keys: [
+      "rewardType",
+      "rewardValue",
+      "multiplier",
+      "maxPointsPerTxn",
+      "minEventValue",
+    ],
+    cols: "grid-cols-2 md:grid-cols-3 lg:grid-cols-5",
+  },
+];
+
+const FULL_WIDTH_KEYS = ["rewardPayload", "criteriaExpression"];
 
 export default function RuleDetailsPage({
   ruleId,
@@ -34,57 +76,53 @@ export default function RuleDetailsPage({
   });
 
   const rule = useMemo<LoyaltyRule | null>(() => {
-    if (!Array.isArray(rulesQuery.data) || parsedRuleId === null) {
-      return null;
-    }
-    const foundRule =
+    if (!Array.isArray(rulesQuery.data) || parsedRuleId === null) return null;
+    const found =
       rulesQuery.data.find((item) => Number(item?.id) === parsedRuleId) ?? null;
-
-    return foundRule && typeof foundRule === "object" ? foundRule : null;
+    return found && typeof found === "object" ? found : null;
   }, [parsedRuleId, rulesQuery.data]);
 
-  if (rulesQuery.isLoading) {
-    return <RulesSkeleton />;
-  }
-
-  if (parsedRuleId === null) {
+  if (rulesQuery.isLoading) return <RulesSkeleton />;
+  if (parsedRuleId === null)
     return (
       <Card>
-        <Typography color="error.main">Invalid rule id.</Typography>
+        <p className="text-red-500">Invalid rule id.</p>
       </Card>
     );
-  }
-
-  if (rulesQuery.error) {
+  if (rulesQuery.error)
     return (
       <Card>
-        <Typography color="error.main">
+        <p className="text-red-500">
           {rulesQuery.error instanceof Error
             ? rulesQuery.error.message
             : "Failed to load rule details."}
-        </Typography>
+        </p>
       </Card>
     );
-  }
-
-  if (!rule) {
+  if (!rule)
     return (
       <Card>
-        <Typography color="error.main">Rule not found.</Typography>
+        <p className="text-red-500">Rule not found.</p>
       </Card>
     );
-  }
 
-  const ruleEntries = Object.entries(rule);
+  const ruleRecord = rule as Record<string, unknown>;
+
+  // Ungrouped keys — anything not in GROUPS or FULL_WIDTH_KEYS
+  const groupedKeys = new Set([
+    ...GROUPS.flatMap((g) => g.keys),
+    ...FULL_WIDTH_KEYS,
+  ]);
+  const ungroupedEntries = Object.entries(ruleRecord).filter(
+    ([k]) => !groupedKeys.has(k),
+  );
 
   return (
     <Card
       title="Rule Details"
       subtitle={`Full information of the rule with ID: ${rule.id}`}
       sideComponents={
-        <Box
-          sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}
-        >
+        <div className="mt-2 flex justify-end gap-2">
           <Button
             type="button"
             onClick={() => router.push("/dashboard")}
@@ -99,41 +137,51 @@ export default function RuleDetailsPage({
           >
             Edit Rule
           </Button>
-        </Box>
+        </div>
       }
     >
-      <Stack spacing={2}>
-        {ruleEntries.map(([key, value]) => (
-          <Box
-            key={key}
-            sx={{
-              border: "1px solid",
-              borderColor:
-                "color-mix(in srgb, var(--color-primary) 20%, transparent)",
-              borderRadius: 2,
-              p: 2,
-              boxShadow:
-                "0 8px 8px -8px color-mix(in srgb, var(--color-primary) 35%, transparent)",
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                textTransform: "uppercase",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                letterSpacing: 0.6,
-              }}
-            >
-              {prettifyKey(key)}
-            </Typography>
-            <Box sx={{ mt: 0.25 }}>
-              <RuleValueRenderer value={value} itemKey={key} depth={0} />
-            </Box>
-          </Box>
+      <div className="flex flex-col gap-8 mt-2">
+        {/* Defined groups */}
+        {GROUPS.map((group) => (
+          <SectionGroup
+            key={group.label}
+            label={group.label}
+            icon={group.icon}
+            keys={group.keys}
+            cols={group.cols}
+            rule={ruleRecord}
+          />
         ))}
-      </Stack>
+
+        {ungroupedEntries.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-1 h-5 rounded-full bg-primary" />
+              <span className="text-sm font-bold uppercase tracking-widest text-primary">
+                Other
+              </span>
+              <span className="flex-1 border-t border-dashed border-gray-100" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {ungroupedEntries.map(([key, value]) => (
+                <FieldBox key={key} label={prettifyKey(key)} value={value} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {FULL_WIDTH_KEYS.some((k) => k in ruleRecord) && (
+          <div className="flex flex-col gap-3 pt-2 border-t border-dashed border-primary">
+            {FULL_WIDTH_KEYS.filter((k) => k in ruleRecord).map((key) => (
+              <FullWidthBox
+                key={key}
+                label={prettifyKey(key)}
+                value={ruleRecord[key]}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </Card>
   );
 }

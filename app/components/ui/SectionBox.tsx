@@ -1,5 +1,15 @@
-import { Box, Typography } from "@mui/material";
+import { Icon } from "@iconify/react";
 import type { ReactNode } from "react";
+
+const SECTION_ICONS: Record<string, string> = {
+  Identity: "fluent:tag-24-regular",
+  Configuration: "fluent:settings-24-regular",
+  "Reward Values": "fluent:gift-24-regular",
+  "Validity Period": "fluent:calendar-24-regular",
+  "Limits & Blackout": "fluent:shield-24-regular",
+  "Reward Payload": "fluent:box-24-regular",
+  "Criteria Expression": "fluent:filter-24-regular",
+};
 
 type SectionBoxProps = {
   title: string;
@@ -7,36 +17,22 @@ type SectionBoxProps = {
 };
 
 export default function SectionBox({ title, children }: SectionBoxProps) {
+  const icon = SECTION_ICONS[title] ?? "fluent:circle-24-regular";
+
   return (
-    <Box
-      sx={{
-        border: "1px solid",
-        borderColor: "#cbd5e1",
-        borderRadius: 2,
-        p: 3,
-        boxShadow: "0 4px 12px 0 rgba(0,0,0,0.14)", // more fuzzy shadow
-      }}
-    >
-      <Typography
-        variant="overline"
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          mb: 3,
-          color: "#1c88bd",
-          fontWeight: 700,
-          "&::after": {
-            content: '""',
-            flex: 1,
-            height: "1px",
-            bgcolor: "#1c88bd66",
-          },
-        }}
-      >
-        {title}
-      </Typography>
-      {children}
-    </Box>
+    <div className="flex flex-col rounded-xl overflow-hidden border border-primary/10 border-t-primary/50 shadow-sm hover:shadow-md transition-shadow duration-200">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-4 border-b border-b-primary/10 bg-primary/5">
+        <Icon icon={icon} className="text-base text-primary shrink-0" />
+        <span className="text-xs font-bold uppercase tracking-widest text-primary">
+          {title}
+        </span>
+      </div>
+
+      {/* Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-white px-4 py-4">
+        {children}
+      </div>
+    </div>
   );
 }

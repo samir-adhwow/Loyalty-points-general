@@ -7,7 +7,6 @@ import {
 } from "@mui/material";
 
 export default function SelectField({
-  size,
   dataField,
   label,
   value,
@@ -18,7 +17,7 @@ export default function SelectField({
   children,
 }) {
   return (
-    <Grid size={size} data-field={dataField}>
+    <Grid data-field={dataField}>
       <FormControl fullWidth error={Boolean(error)}>
         <InputLabel
           required={required}

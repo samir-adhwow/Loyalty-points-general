@@ -12,8 +12,8 @@ export type CreateRulePayload = {
   maxPointsPerTxn: number | null;
   priority: number;
   status: string | number;
-  appliesFrom: string;
-  appliesTo: string;
+  appliesFrom: string | Date;
+  appliesTo: string | Date;
   criteriaExpression: Record<string, string>;
   rewardPayload: Record<string, string>;
 };

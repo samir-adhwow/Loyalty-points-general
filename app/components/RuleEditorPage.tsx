@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { Box, Grid, MenuItem, Typography } from "@mui/material";
+import { MenuItem } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material/Select";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
+import { Icon } from "@iconify/react";
 
 import Card from "./ui/Card";
 import Button from "./ui/Button";
@@ -32,6 +33,7 @@ import {
   getEditFormFromRule,
   getInitialCreateForm,
 } from "@/app/lib/createRuleModal";
+import DateTimePickerField from "./ui/DateTimePicker";
 
 type RuleEditorMode = "create" | "edit";
 type RuleForm = ReturnType<typeof getInitialCreateForm>;
@@ -86,15 +88,12 @@ export default function RuleEditorPage({
   // ---------------- LOAD EDIT DATA ----------------
   useEffect(() => {
     if (!isEdit) return;
-
     const id = Number(ruleId);
     if (!id) return;
-
     const rule = rules.find((r) => Number(r.id) === id);
     if (!rule) return;
 
     const normalized = getEditFormFromRule(rule);
-
     setForm(normalized);
     setErrors({});
     setCriteriaRows(objectToRows(rule.criteriaExpression));
@@ -149,7 +148,6 @@ export default function RuleEditorPage({
             expiryDays: "",
           };
         }
-
         if (field === "rewardMode") {
           return {
             ...prev,
@@ -159,7 +157,6 @@ export default function RuleEditorPage({
             expiryDays: "",
           };
         }
-
         return { ...prev, [field]: value };
       });
     };
@@ -177,7 +174,6 @@ export default function RuleEditorPage({
     e.preventDefault();
 
     const criteriaExpression = rowsToObject(criteriaRows);
-
     const rewardPayload = isTieredFlexible
       ? {
           ...tiersToPayload(tierRows),
@@ -197,8 +193,6 @@ export default function RuleEditorPage({
       rewardPayload,
     };
 
-    console.log("Submitting payload:", payload);
-
     const result = createRulePayloadSchema.safeParse(payload);
 
     if (!result.success) {
@@ -209,7 +203,6 @@ export default function RuleEditorPage({
           nextErrors[field] = i.message;
         }
       });
-      console.log("Validation errors:", nextErrors);
       setErrors(nextErrors);
       const firstField = Object.keys(nextErrors)[0];
       if (firstField) {
@@ -228,13 +221,13 @@ export default function RuleEditorPage({
     });
 
     toast.success(isEdit ? "Updated!" : "Created!");
-    router.push("/dashboard");
+    router.push(isEdit ? `/rules/${form.id}/view` : "/rules");
   };
 
   // ---------------- UI STATES ----------------
   if (isEdit && isLoading) return <Loading />;
   if (isEdit && error)
-    return <Typography color="error">Failed to load</Typography>;
+    return <p className="text-red-500 p-4">Failed to load rule.</p>;
 
   return (
     <Card
@@ -245,315 +238,233 @@ export default function RuleEditorPage({
           : "Define a new loyalty rule by filling out the form below."
       }
     >
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 4 }}
-      >
+      <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-6">
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-          {/* ── Identity ──────────────────────────────────────── */}
+          {/* ── Identity ─────────────────────────────────────── */}
           <SectionBox title="Identity">
-            <Grid container spacing={2}>
-              {(
-                ["id", "code", "name", "description", "eventType"] as const
-              ).map((f) => (
-                <Grid key={f} size={{ xs: 12, sm: 6 }}>
-                  <FormTextField
-                    name={f}
-                    inputRef={register(f).ref}
-                    label={formatFieldLabel(f)}
-                    value={form[f]}
-                    onChange={update(f)}
-                    disabled={f === "id"}
-                    required={["code", "name", "eventType"].includes(f)}
-                    error={!!errors[f]}
-                    helperText={errors[f] || " "}
-                  />
-                </Grid>
-              ))}
-            </Grid>
+            {(["id", "code", "name", "description", "eventType"] as const).map(
+              (f) => (
+                <FormTextField
+                  key={f}
+                  name={f}
+                  inputRef={register(f).ref}
+                  label={formatFieldLabel(f)}
+                  value={form[f]}
+                  onChange={update(f)}
+                  disabled={f === "id"}
+                  required={["code", "name", "eventType"].includes(f)}
+                  error={!!errors[f]}
+                  helperText={errors[f] || " "}
+                />
+              ),
+            )}
           </SectionBox>
 
-          {/* ── Configuration ─────────────────────────────────── */}
+          {/* ── Configuration ────────────────────────────────── */}
           <SectionBox title="Configuration">
-            <Grid container spacing={2}>
-              <SelectField
-                size={{ xs: 12, sm: 6 }}
-                dataField="ruleType"
-                label="Rule Type"
-                value={form.ruleType}
-                onChange={update("ruleType")}
-                error={Boolean(errors.ruleType)}
-                helperText={errors.ruleType || " "}
-              >
-                <MenuItem value="TRANSACTION_EVENT">Transaction</MenuItem>
-                <MenuItem value="BEHAVIOURAL">Behavioural</MenuItem>
-                <MenuItem value="PROMOTIONAL">Promotional</MenuItem>
-              </SelectField>
+            <SelectField
+              dataField="ruleType"
+              label="Rule Type"
+              value={form.ruleType}
+              onChange={update("ruleType")}
+              error={Boolean(errors.ruleType)}
+              helperText={errors.ruleType || " "}
+            >
+              <MenuItem value="TRANSACTION_EVENT">Transaction</MenuItem>
+              <MenuItem value="BEHAVIOURAL">Behavioural</MenuItem>
+              <MenuItem value="PROMOTIONAL">Promotional</MenuItem>
+            </SelectField>
 
+            <SelectField
+              dataField="rewardType"
+              label="Reward Type"
+              value={form.rewardType}
+              onChange={update("rewardType")}
+              error={Boolean(errors.rewardType)}
+              helperText={errors.rewardType || " "}
+            >
+              <MenuItem value="FIXED">Fixed</MenuItem>
+              <MenuItem value="MULTIPLIER">Multiplier</MenuItem>
+              <MenuItem value="TIERED">Tiered</MenuItem>
+              <MenuItem value="PERCENTAGE">Percentage</MenuItem>
+            </SelectField>
+
+            {isTiered && (
               <SelectField
-                size={{ xs: 12, sm: 6 }}
-                dataField="rewardType"
-                label="Reward Type"
-                value={form.rewardType}
-                onChange={update("rewardType")}
-                error={Boolean(errors.rewardType)}
-                helperText={errors.rewardType || " "}
+                dataField="rewardMode"
+                label="Reward Mode"
+                value={form.rewardMode}
+                onChange={update("rewardMode")}
+                error={Boolean(errors.rewardMode)}
+                helperText={errors.rewardMode || " "}
               >
                 <MenuItem value="FIXED">Fixed</MenuItem>
-                <MenuItem value="MULTIPLIER">Multiplier</MenuItem>
-                <MenuItem value="TIERED">Tiered</MenuItem>
-                <MenuItem value="PERCENTAGE">Percentage</MenuItem>
+                <MenuItem value="FLEXIBLE">Flexible</MenuItem>
               </SelectField>
+            )}
 
-              {isTiered && (
-                <SelectField
-                  size={{ xs: 12, sm: 6 }}
-                  dataField="rewardMode"
-                  label="Reward Mode"
-                  value={form.rewardMode}
-                  onChange={update("rewardMode")}
-                  error={Boolean(errors.rewardMode)}
-                  helperText={errors.rewardMode || " "}
-                >
-                  <MenuItem value="FIXED">Fixed</MenuItem>
-                  <MenuItem value="FLEXIBLE">Flexible</MenuItem>
-                </SelectField>
-              )}
+            <SelectField
+              dataField="status"
+              label="Status"
+              value={form.status}
+              onChange={update("status")}
+              required
+              error={Boolean(errors.status)}
+              helperText={errors.status || " "}
+            >
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="INACTIVE">Inactive</MenuItem>
+            </SelectField>
 
-              <SelectField
-                size={{ xs: 12, sm: 6 }}
-                dataField="status"
-                label="Status"
-                value={form.status}
-                onChange={update("status")}
-                required
-                error={Boolean(errors.status)}
-                helperText={errors.status || " "}
-              >
-                <MenuItem value="ACTIVE">Active</MenuItem>
-                <MenuItem value="INACTIVE">Inactive</MenuItem>
-              </SelectField>
-
-              <SelectField
-                size={{ xs: 12, sm: 6 }}
-                dataField="priority"
-                label="Priority"
-                value={form.priority}
-                onChange={update("priority")}
-                error={Boolean(errors.priority)}
-                helperText={errors.priority || " "}
-              >
-                <MenuItem value={1}>Low</MenuItem>
-                <MenuItem value={2}>Medium</MenuItem>
-                <MenuItem value={3}>High</MenuItem>
-              </SelectField>
-            </Grid>
+            <SelectField
+              dataField="priority"
+              label="Priority"
+              value={form.priority}
+              onChange={update("priority")}
+              error={Boolean(errors.priority)}
+              helperText={errors.priority || " "}
+            >
+              <MenuItem value={1}>Low</MenuItem>
+              <MenuItem value={2}>Medium</MenuItem>
+              <MenuItem value={3}>High</MenuItem>
+            </SelectField>
           </SectionBox>
 
-          {/* ── Reward Values ─────────────────────────────────── */}
+          {/* ── Reward Values ──────────────────────────────────*/}
           <SectionBox title="Reward Values">
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormTextField
-                  name="rewardValue"
-                  inputRef={register("rewardValue").ref}
-                  label="Reward Value"
-                  type="number"
-                  value={form.rewardValue}
-                  onChange={update("rewardValue")}
-                  disabled={isMultiplier || isTiered}
-                  required
-                  error={Boolean(errors.rewardValue)}
-                  helperText={errors.rewardValue || " "}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormTextField
-                  name="multiplier"
-                  inputRef={register("multiplier").ref}
-                  label="Multiplier"
-                  type="number"
-                  value={form.multiplier}
-                  onChange={update("multiplier")}
-                  disabled={!isMultiplier}
-                  error={Boolean(errors.multiplier)}
-                  helperText={errors.multiplier || " "}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormTextField
-                  name="minEventValue"
-                  inputRef={register("minEventValue").ref}
-                  label="Min Event Value"
-                  type="number"
-                  value={form.minEventValue}
-                  onChange={update("minEventValue")}
-                  disabled={isMultiplier || isTieredFlexible}
-                  error={Boolean(errors.minEventValue)}
-                  helperText={errors.minEventValue || " "}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormTextField
-                  name="maxPointsPerTxn"
-                  inputRef={register("maxPointsPerTxn").ref}
-                  label="Max Points / Txn"
-                  type="number"
-                  value={form.maxPointsPerTxn}
-                  onChange={update("maxPointsPerTxn")}
-                  disabled={isTieredFlexible}
-                  error={Boolean(errors.maxPointsPerTxn)}
-                  helperText={errors.maxPointsPerTxn || " "}
-                />
-              </Grid>
-            </Grid>
+            <FormTextField
+              name="rewardValue"
+              inputRef={register("rewardValue").ref}
+              label="Reward Value"
+              type="number"
+              value={form.rewardValue}
+              onChange={update("rewardValue")}
+              disabled={isMultiplier || isTiered}
+              required
+              error={Boolean(errors.rewardValue)}
+              helperText={errors.rewardValue || " "}
+            />
+            <FormTextField
+              name="multiplier"
+              inputRef={register("multiplier").ref}
+              label="Multiplier"
+              type="number"
+              value={form.multiplier}
+              onChange={update("multiplier")}
+              disabled={!isMultiplier}
+              error={Boolean(errors.multiplier)}
+              helperText={errors.multiplier || " "}
+            />
+            <FormTextField
+              name="minEventValue"
+              inputRef={register("minEventValue").ref}
+              label="Min Event Value"
+              type="number"
+              value={form.minEventValue}
+              onChange={update("minEventValue")}
+              disabled={isMultiplier || isTieredFlexible}
+              error={Boolean(errors.minEventValue)}
+              helperText={errors.minEventValue || " "}
+            />
+            <FormTextField
+              name="maxPointsPerTxn"
+              inputRef={register("maxPointsPerTxn").ref}
+              label="Max Points / Txn"
+              type="number"
+              value={form.maxPointsPerTxn}
+              onChange={update("maxPointsPerTxn")}
+              disabled={isTieredFlexible}
+              error={Boolean(errors.maxPointsPerTxn)}
+              helperText={errors.maxPointsPerTxn || " "}
+            />
           </SectionBox>
 
           {/* ── Validity Period ───────────────────────────────── */}
           <SectionBox title="Validity Period">
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <DateTimePicker
-                  label="From"
-                  value={dayjs(form.appliesFrom)}
-                  onChange={updateDate("appliesFrom")}
-                  sx={{ width: "100%" }}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      name: "appliesFrom",
-                      inputRef: register("appliesFrom").ref,
-                      helperText: errors.appliesFrom || " ",
-                    },
-                  }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <DateTimePicker
-                  label="To"
-                  value={dayjs(form.appliesTo)}
-                  onChange={updateDate("appliesTo")}
-                  sx={{ width: "100%" }}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      name: "appliesTo",
-                      inputRef: register("appliesTo").ref,
-                      helperText: errors.appliesTo || " ",
-                    },
-                  }}
-                />
-              </Grid>
-            </Grid>
+            <DateTimePickerField
+              label="From"
+              name="appliesFrom"
+              value={form.appliesFrom}
+              onChange={updateDate("appliesFrom")}
+              inputRef={register("appliesFrom").ref}
+              error={Boolean(errors.appliesFrom)}
+              helperText={errors.appliesFrom || " "}
+              required
+            />
+            <DateTimePickerField
+              label="To"
+              name="appliesTo"
+              value={form.appliesTo}
+              onChange={updateDate("appliesTo")}
+              inputRef={register("appliesTo").ref}
+              error={Boolean(errors.appliesTo)}
+              helperText={errors.appliesTo || " "}
+              required
+            />
           </SectionBox>
 
-          {/* ── Limits & Blackout ────────────────────────────────── */}
+          {/* ── Limits & Blackout ────────────────────────────── */}
           <SectionBox title="Limits & Blackout">
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormTextField
-                  name="partnerId"
-                  inputRef={register("partnerId").ref}
-                  label="Partner ID"
-                  value={form.partnerId ?? ""}
-                  onChange={update("partnerId")}
-                  helperText={errors.partnerId || " "}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormTextField
-                  name="maxPointsDaily"
-                  inputRef={register("maxPointsDaily").ref}
-                  label="Max Points Daily"
-                  type="number"
-                  value={form.maxPointsDaily ?? ""}
-                  onChange={update("maxPointsDaily")}
-                  helperText={errors.maxPointsDaily || " "}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormTextField
-                  name="maxPointsWeekly"
-                  inputRef={register("maxPointsWeekly").ref}
-                  label="Max Points Weekly"
-                  type="number"
-                  value={form.maxPointsWeekly ?? ""}
-                  onChange={update("maxPointsWeekly")}
-                  helperText={errors.maxPointsWeekly || " "}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormTextField
-                  name="maxPointsMonthly"
-                  inputRef={register("maxPointsMonthly").ref}
-                  label="Max Points Monthly"
-                  type="number"
-                  value={form.maxPointsMonthly ?? ""}
-                  onChange={update("maxPointsMonthly")}
-                  helperText={errors.maxPointsMonthly || " "}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <DateTimePicker
-                  label="Blackout From"
-                  value={form.blackoutFrom ? dayjs(form.blackoutFrom) : null}
-                  onChange={updateDate("blackoutFrom")}
-                  sx={{ width: "100%" }}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      name: "blackoutFrom",
-                      inputRef: register("blackoutFrom").ref,
-                      error: Boolean(errors.blackoutFrom),
-                      helperText: errors.blackoutFrom || " ",
-                    },
-                  }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <DateTimePicker
-                  label="Blackout To"
-                  value={form.blackoutTo ? dayjs(form.blackoutTo) : null}
-                  onChange={updateDate("blackoutTo")}
-                  sx={{ width: "100%" }}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      name: "blackoutTo",
-                      inputRef: register("blackoutTo").ref,
-                      error: Boolean(errors.blackoutTo),
-                      helperText: errors.blackoutTo || " ",
-                    },
-                  }}
-                />
-              </Grid>
-            </Grid>
+            <FormTextField
+              name="partnerId"
+              inputRef={register("partnerId").ref}
+              label="Partner ID"
+              value={form.partnerId ?? ""}
+              onChange={update("partnerId")}
+              helperText={errors.partnerId || " "}
+            />
+            <FormTextField
+              name="maxPointsDaily"
+              inputRef={register("maxPointsDaily").ref}
+              label="Max Points Daily"
+              type="number"
+              value={form.maxPointsDaily ?? ""}
+              onChange={update("maxPointsDaily")}
+              helperText={errors.maxPointsDaily || " "}
+            />
+            <FormTextField
+              name="maxPointsWeekly"
+              inputRef={register("maxPointsWeekly").ref}
+              label="Max Points Weekly"
+              type="number"
+              value={form.maxPointsWeekly ?? ""}
+              onChange={update("maxPointsWeekly")}
+              helperText={errors.maxPointsWeekly || " "}
+            />
+            <FormTextField
+              name="maxPointsMonthly"
+              inputRef={register("maxPointsMonthly").ref}
+              label="Max Points Monthly"
+              type="number"
+              value={form.maxPointsMonthly ?? ""}
+              onChange={update("maxPointsMonthly")}
+              helperText={errors.maxPointsMonthly || " "}
+            />
+            <DateTimePickerField
+              label="Blackout From"
+              name="blackoutFrom"
+              value={form.blackoutFrom ?? null}
+              onChange={updateDate("blackoutFrom")}
+              inputRef={register("blackoutFrom").ref}
+              error={Boolean(errors.blackoutFrom)}
+              helperText={errors.blackoutFrom || " "}
+            />
+            <DateTimePickerField
+              label="Blackout To"
+              name="blackoutTo"
+              value={form.blackoutTo ?? null}
+              onChange={updateDate("blackoutTo")}
+              inputRef={register("blackoutTo").ref}
+              error={Boolean(errors.blackoutTo)}
+              helperText={errors.blackoutTo || " "}
+            />
           </SectionBox>
 
-          {/* ── Reward Payload ────────────────────────────────── */}
+          {/* ── Reward Payload ───────────────────────────────── */}
           <SectionBox title="Reward Payload">
             {isTieredFlexible ? (
-              <TierEditor tiers={tierRows} onChange={setTierRows} />
-            ) : (
-              <KeyValueEditor
-                label="Reward Payload"
-                rows={rewardRows}
-                onChange={setRewardRows}
-              />
-            )}
-            {showExpiryDays && (
-              <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                <Grid size={{ xs: 12, sm: 6 }}>
+              <>
+                <div className="col-span-full">
                   <FormTextField
                     name="expiryDays"
                     inputRef={register("expiryDays").ref}
@@ -563,12 +474,20 @@ export default function RuleEditorPage({
                     onChange={update("expiryDays")}
                     helperText={errors.expiryDays || " "}
                   />
-                </Grid>
-              </Grid>
+                </div>
+                {/* Tier table */}
+                <TierEditor tiers={tierRows} onChange={setTierRows} />
+              </>
+            ) : (
+              <KeyValueEditor
+                label="Reward Payload"
+                rows={rewardRows}
+                onChange={setRewardRows}
+              />
             )}
           </SectionBox>
 
-          {/* ── Criteria ──────────────────────────────────────── */}
+          {/* ── Criteria Expression ──────────────────────────── */}
           <SectionBox title="Criteria Expression">
             <KeyValueEditor
               label="Criteria"
@@ -578,18 +497,26 @@ export default function RuleEditorPage({
           </SectionBox>
         </LocalizationProvider>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-          <Button
-            onClick={() => router.push("/dashboard")}
-            className="btn_ghost"
-          >
+        {/* ── Actions ──────────────────────────────────────── */}
+        <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+          <Button onClick={() => router.push("/rules")} className="btn_ghost">
             Cancel
           </Button>
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Saving..." : "Save"}
+            {isPending ? (
+              <span className="flex items-center gap-2">
+                <Icon
+                  icon="fluent:spinner-ios-20-regular"
+                  className="animate-spin"
+                />
+                Saving...
+              </span>
+            ) : (
+              "Save"
+            )}
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </form>
     </Card>
   );
 }

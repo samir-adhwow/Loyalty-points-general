@@ -97,7 +97,9 @@ export default function LoyaltyAccountPanel() {
               Current Balance
             </Typography>
             <Table
-              columns={balanceColumns_LoyaltyAccountPanel}
+              columns={balanceColumns_LoyaltyAccountPanel(
+                normalizedAccountNumber,
+              )}
               data={balanceRows}
             />
 

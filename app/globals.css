@@ -5,8 +5,10 @@
   --foreground: #171717;
   --color-primary: #1c88bd;
   --color-secondary: #f0a65c; /* teal-400 */
+  --color-lightest: #f8fafc; /* slate-50 */
   --color-lighter: #f1f5f9; /* slate-100 */
   --color-light: #cbd5e1; /* slate-300 */
+  --color-label: #64748b; /* slate-500 */
   --color-dark: #334155; /* slate-700 */
   --color-darker: #1e293b; /* slate-900 */
 }
@@ -16,8 +18,10 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--color-primary);
   --color-secondary: var(--color-secondary);
+  --color-lightest: var(--color-lightest);
   --color-light: var(--color-light);
   --color-lighter: var(--color-lighter);
+  --color-label: var(--color-label);
   --color-dark: var(--color-dark);
   --color-darker: var(--color-darker);
   --font-sans: var(--font-geist-sans);
